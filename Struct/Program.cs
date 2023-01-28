@@ -17,6 +17,57 @@ void ResizeArray(ref Product[] products, int newLength) // ref Product[] product
 	}
 	products = newArray; // для расширения для старого массива
 }
+
+int InputInt(string message)
+{
+	bool inputResult;
+	int number;
+
+	do
+	{
+
+		Console.WriteLine(message);
+		inputResult = int.TryParse(Console.ReadLine(), out number);
+
+	} while (!inputResult);
+	return number;
+}
+
+DateTime InputDateTime(string message)
+{
+	bool inputResult;
+	DateTime dt;
+
+	do
+	{
+
+		Console.WriteLine(message);
+		inputResult = DateTime.TryParse(Console.ReadLine(), out dt);
+
+	} while (!inputResult);
+	return dt;
+}
+
+bool InputBool(string message)
+{
+	bool inputResult;
+	bool b;
+
+	do
+	{
+
+		Console.WriteLine(message);
+		inputResult = bool.TryParse(Console.ReadLine(), out b);
+
+	} while (!inputResult);
+	return b;
+}
+
+string InputString(string message)
+{
+	Console.WriteLine(message);
+	return Console.ReadLine();
+}
 #endregion
 
 #region CRUD Methonds
@@ -109,6 +160,63 @@ void InsertproductIntoPosition(ref Product[] products, int position, Product pro
 #endregion
 
 #region Tools Methods .// Заполнение таблицы и Распичатка ее.
+DateTime GetMinDeliveryDate(Product[] products) // поиск минимальной даты
+{
+	DateTime minDate = products[0].DeliveryDate;
+
+	for (int i = 0; i < products.Length; i++)
+	{
+		if (products[i].DeliveryDate < minDate)
+		{
+			minDate = products[i].DeliveryDate;
+		}
+	}
+	return minDate;
+}
+
+DateTime GetMaxDeliveryDate(Product[] products) // поиск максимальной даты
+{
+	DateTime maxDate = products[0].DeliveryDate;
+
+	for (int i = 0; i < products.Length; i++)
+	{
+		if (products[i].DeliveryDate > maxDate)
+		{
+			maxDate = products[i].DeliveryDate;
+		}
+	}
+	return maxDate;
+}
+
+
+int GetMinSelfLifeDays(Product[] products) // поиск минимальной срокагоднасти
+{
+	int minSelfLifeDays = products[0].SelfLifeDays;
+
+	for (int i = 0; i < products.Length; i++)
+	{
+		if (products[i].SelfLifeDays < minSelfLifeDays)
+		{
+			minSelfLifeDays = products[i].SelfLifeDays;
+		}
+	}
+	return minSelfLifeDays;
+}
+
+int GetMaxSelfLifeDays(Product[] products) // поиск максимальной срокагоднасти
+{
+	int maxSelfLifeDays = products[0].SelfLifeDays;
+
+	for (int i = 0; i < products.Length; i++)
+	{
+		if (products[i].SelfLifeDays > maxSelfLifeDays)
+		{
+			maxSelfLifeDays = products[i].SelfLifeDays;
+		}
+	}
+	return maxSelfLifeDays;
+}
+
 
 int GetIndexById(Product[] products, int id) // ищем индексы чтоо бы совпали
 {
@@ -127,7 +235,7 @@ int GetIndexById(Product[] products, int id) // ищем индексы чтоо
 	return -1;
 }
 
-static Product CreateProduct(Product[] products, ref int CURRENT_ID, bool isNewId)
+Product CreateProduct(Product[] products, ref int CURRENT_ID, bool isNewId)
 {
 	Product product;
 	if (isNewId)
@@ -140,21 +248,29 @@ static Product CreateProduct(Product[] products, ref int CURRENT_ID, bool isNewI
 		product.Id = 0;
 	}
 
-	Console.WriteLine("Введите название продукта: ");
-	product.Name = Console.ReadLine();
 
-	Console.WriteLine("Введит  поставщика: ");
-	product.Contractor = Console.ReadLine();
+	product.Name = InputString("Введите название продукта: ");
 
-	Console.WriteLine("Введите дату доставки: ");
-	product.DeliveryDate = DateTime.Parse(Console.ReadLine());
+	product.Contractor = InputString("Введит  поставщика: ");
 
-	Console.WriteLine("Введите срок годности: ");
-	product.SelfLifeDays = int.Parse(Console.ReadLine());
+	product.DeliveryDate = InputDateTime("Введите дату доставки: ");
 
-	Console.WriteLine("Введите остаток продукта: ");
-	product.Balance = int.Parse(Console.ReadLine());
+	product.SelfLifeDays = InputInt("Введите срок годности: ");
 
+	product.Balance = InputInt("Введите остаток продукта: ");
+
+	return product;
+}
+
+Product CreateEmptyProduct()
+{
+	Product product;
+	product.Id = 0;
+	product.Name = "";
+	product.Contractor = "";
+	product.Balance = 0;
+	product.SelfLifeDays = 0;
+	product.DeliveryDate = DateTime.Now;
 	return product;
 }
 void PrintProduct(Product product)
@@ -186,6 +302,95 @@ void PrintManyProducts(Product[] products)
 }
 #endregion
 
+#region Retrive Methods
+bool FindProductById(Product[] products, int id, out Product product)
+{
+	int indexPrint = GetIndexById(products, id);
+
+	if (indexPrint == -1)
+	{
+		product = CreateEmptyProduct();
+		return false;
+	}
+	else
+	{
+		product = products[indexPrint];
+		return true;
+	}
+}
+
+Product[] FindProductsFromMinToMaxDeliveryDate(Product[] products, DateTime minData, DateTime maxData)
+{
+	Product[] findedProducts = null;
+
+	for (int i = 0; i < products.Length; i++)
+	{
+		if (products[i].DeliveryDate >= minData && products[i].DeliveryDate <= maxData)
+		{
+			AddNewProduct(ref findedProducts, products[i]);
+		}
+	}
+	return findedProducts;
+}
+
+
+
+Product[] FindProductsFromMinToMaxSelfLifeDays(Product[] products, int minSelfLifeDays, int maxSelfLifeDays)
+{
+	Product[] findedProducts = null;
+
+	for (int i = 0; i < products.Length; i++)
+	{
+		if (products[i].SelfLifeDays >= minSelfLifeDays && products[i].SelfLifeDays <= maxSelfLifeDays)
+		{
+			AddNewProduct(ref findedProducts, products[i]);
+		}
+	}
+	return findedProducts;
+}
+
+#endregion
+
+#region Sort Methods
+void SortproductsByBalance(Product[] products, bool asc) // сортировка пузырьком
+{
+	Product[] temp;
+	bool sort;
+	int offset = 0;
+
+	do
+	{
+		sort = true;
+
+		for (int i = 0; i < products.Length - 1 - offset; i++)
+		{
+			bool compareResult;
+
+			if (asc)
+			{
+				compareResult = products[i + 1].Balance < products[i].Balance;
+			}
+			else
+			{
+				compareResult = products[i + 1].Balance > products[i].Balance;
+			}
+
+			if (compareResult)
+			{
+					temp = products;
+					products[i] = products[i + 1];
+					products = temp;
+			
+
+				sort = false;
+			}
+		}
+
+		offset++;
+	} while (!sort);
+}
+#endregion
+
 #region Interface Methods // Управление меню
 void PrintMenu()
 {
@@ -194,23 +399,14 @@ void PrintMenu()
 	Console.WriteLine("3. Clear all products");
 	Console.WriteLine("4. Update product by id");
 	Console.WriteLine("5. Insert product into position");
+	Console.WriteLine("6. Find product by id");
+	Console.WriteLine("7. Find products from min to max delivery date");
+	Console.WriteLine("8. Find products from min to max Self Life Days date");
+	Console.WriteLine("9. Sort products by balance");
 	Console.WriteLine("0. Exit");
 }
 
-int InputInt(string message)
-{
-	bool inputResult;
-	int number;
 
-	do
-	{
-
-		Console.WriteLine(message);
-		inputResult = int.TryParse(Console.ReadLine(), out number);
-
-	} while (!inputResult);
-	return number;
-}
 #endregion
 
 
@@ -259,7 +455,56 @@ while (runProgram)
 				InsertproductIntoPosition(ref products, position, product);
 			}
 			break;
+		case 6:
+			{
+				int id = InputInt("InputInt id for retrive:");
+				Product prodact;
+				bool isFinded = FindProductById(products, id, out Product product);
 
+				if (isFinded)
+				{
+					PrintProduct(product);
+				}
+				else
+				{
+					Console.WriteLine("Print is impossibe. Element not found");
+				}
+			}
+			break;
+		case 7:
+			{
+				Console.WriteLine($"input min end max delivery date from {GetMinDeliveryDate(products).ToShortDateString()} to {GetMaxDeliveryDate(products).ToShortDateString()}");
+				Console.WriteLine("min date: ");
+				DateTime minDate = DateTime.Parse(Console.ReadLine());
+
+				Console.WriteLine("max date: ");
+				DateTime maxDate = DateTime.Parse(Console.ReadLine());
+
+				Product[] findedProducts = FindProductsFromMinToMaxDeliveryDate(products, minDate, maxDate);
+
+				PrintManyProducts(findedProducts);
+			}
+			break;
+
+		case 8:
+			{
+				Console.WriteLine($"input min end max Self Life Days date from {GetMinSelfLifeDays(products)} to {GetMaxSelfLifeDays(products)}");
+				Console.WriteLine("min  Self Life Days: ");
+				int minSelfLifeDays = int.Parse(Console.ReadLine());
+
+				Console.WriteLine("max  Self Life Days: ");
+				int maxSelfLifeDays = int.Parse(Console.ReadLine());
+
+				Product[] findedProducts = FindProductsFromMinToMaxSelfLifeDays(products, minSelfLifeDays, maxSelfLifeDays);
+
+				PrintManyProducts(findedProducts);
+			}
+			break;
+		case 9:
+			Console.WriteLine("Input asc desc sort (trueor false)");  // сщртировка бузырьковая от меньшего к большему и на обород
+			bool asc = bool.Parse(Console.ReadLine());
+			SortproductsByBalance(products, asc);
+			break;
 		case 0:
 			{
 				Console.WriteLine("Program will be finish"); // выход из меню
