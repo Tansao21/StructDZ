@@ -1,7 +1,10 @@
 ﻿using Store;
+using Serialize;
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 
 
-int CURRENT_ID = 0;
+//int CURRENT_ID = 0;
 
 
 #region System Methonds // Динамически рассширяюшийся массив
@@ -29,7 +32,7 @@ int InputInt(string message)
 		Console.WriteLine(message);
 		inputResult = int.TryParse(Console.ReadLine(), out number);
 
-	} while (!inputResult);
+	} while (!inputResult || number < 0);
 	return number;
 }
 
@@ -235,13 +238,13 @@ int GetIndexById(Product[] products, int id) // ищем индексы чтоо
 	return -1;
 }
 
-Product CreateProduct(Product[] products, ref int CURRENT_ID, bool isNewId)
+Product CreateProduct(Product[] products, bool isNewId)
 {
 	Product product;
 	if (isNewId)
 	{
-		CURRENT_ID++;
-		product.Id = CURRENT_ID;
+		Product.CURRENT_ID++;
+		product.Id = Product.CURRENT_ID;
 	}
 	else
 	{
@@ -300,6 +303,105 @@ void PrintManyProducts(Product[] products)
 	}
 	Console.WriteLine("------------------");
 }
+
+void PrintManyProductsToFile(Product[] products, string fileName) //копирование на файл для печати txt
+{
+	StreamWriter writer = new StreamWriter(fileName);
+
+	writer.WriteLine("{0, -3} {1, -15} {2, -15} {3, -12} {4, -4} {5, -4}", "ИД", "Название", "Поставщик", "Дата дост.", "СГ", "Ост");
+
+	if (products == null)
+	{
+		writer.WriteLine("Array is empty");
+	}
+	else if (products.Length == 0)
+	{
+		writer.WriteLine("Array is empty");
+	}
+	else
+	{
+		for (int i = 0; i < products.Length; i++)
+		{
+			writer.WriteLine("{0, -3} {1, -15} {2, -15} {3, -12} {4, -4} {5, -4}", products[i].Id, products[i].Name, products[i].Contractor, products[i].DeliveryDate.ToShortDateString(), products[i].SelfLifeDays, products[i].Balance);
+		}
+
+	}
+	writer.Close();
+}
+
+void SaveManyProductToFile(Product[] products, string fileName)  // сохранение файла в столбик для считывания машине
+{
+	StreamWriter writer = new StreamWriter(fileName);
+	writer.WriteLine(products.Length);
+
+	writer.WriteLine(Product.CURRENT_ID);
+
+	for (int i = 0; i < products.Length; i++)
+	{
+		writer.WriteLine(products[i].Id);
+		writer.WriteLine(products[i].Name);
+		writer.WriteLine(products[i].Contractor);
+		writer.WriteLine(products[i].DeliveryDate);
+		writer.WriteLine(products[i].SelfLifeDays);
+		writer.WriteLine(products[i].Balance);
+	}
+
+	writer.Close();
+}
+
+Product[] LoadManyProductFromFile(string fileName) // загруска с файла
+{
+	StreamReader reader = new StreamReader(fileName);
+
+	int countProduct = int.Parse(reader.ReadLine());
+	Product.CURRENT_ID = int.Parse(reader.ReadLine());
+
+	Product[] products = new Product[countProduct];
+
+	for (int i = 0; i < products.Length; i++)
+	{
+		products[i].Id = int.Parse(reader.ReadLine());
+		products[i].Name = reader.ReadLine();
+		products[i].Contractor = reader.ReadLine();
+		products[i].DeliveryDate = DateTime.Parse(reader.ReadLine());
+		products[i].SelfLifeDays = int.Parse(reader.ReadLine());
+		products[i].Balance = int.Parse(reader.ReadLine());
+	}
+
+	reader.Close();
+
+	return products;
+}
+
+void SerializeManyProductToFile(Product[] products, string fileName)  // сериализация
+{
+	BinaryFormatter formatter = new BinaryFormatter();
+
+	FileStream stream = new FileStream(fileName, FileMode.OpenOrCreate, FileAccess.Write);
+
+	ProductsList productsList;
+	productsList.CURRENT_ID == Product.CURRENT_ID;
+	productsList.products = products;
+
+	formatter.Serialize(stream, productsList);
+
+	stream.Close();
+}
+
+Product[] DeserializeManyProductFromFile(string fileName)
+{
+	BinaryFormatter formatter = new BinaryFormatter();
+
+	FileStream stream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
+
+	ProductsList = (ProductsList)formatter.Deserialize(stream);
+
+stream.Close();
+
+Product.CURRENT_ID = ProductsList.CURRENT_ID;
+
+return ProductsList.products;
+}
 #endregion
 
 #region Retrive Methods
@@ -352,7 +454,7 @@ Product[] FindProductsFromMinToMaxSelfLifeDays(Product[] products, int minSelfLi
 #endregion
 
 #region Sort Methods
-void SortproductsByBalance(Product[] products, bool asc) // сортировка пузырьком
+/*void SortproductsByBalance(Product[] products, bool asc) // сортировка пузырьком
 {
 	Product[] temp;
 	bool sort;
@@ -377,9 +479,9 @@ void SortproductsByBalance(Product[] products, bool asc) // сортировка
 
 			if (compareResult)
 			{
-					temp = products;
+					temp = products[i];
 					products[i] = products[i + 1];
-					products = temp;
+					products[i + 1] = temp;
 			
 
 				sort = false;
@@ -388,7 +490,7 @@ void SortproductsByBalance(Product[] products, bool asc) // сортировка
 
 		offset++;
 	} while (!sort);
-}
+}*/
 #endregion
 
 #region Interface Methods // Управление меню
@@ -403,10 +505,14 @@ void PrintMenu()
 	Console.WriteLine("7. Find products from min to max delivery date");
 	Console.WriteLine("8. Find products from min to max Self Life Days date");
 	Console.WriteLine("9. Sort products by balance");
+
+	Console.WriteLine("11. Print product to txt file");
+	Console.WriteLine("12. Save product to data file");
+	Console.WriteLine("13. Load product form data file");
+	Console.WriteLine("14. Serialize product form data file");
+	Console.WriteLine("15. Deserialize product form data file");
 	Console.WriteLine("0. Exit");
 }
-
-
 #endregion
 
 
@@ -425,7 +531,7 @@ while (runProgram)
 	{
 		case 1:
 			{
-				Product product = CreateProduct(products, ref CURRENT_ID, true); // при нажатии 1 создаеться пункт меню
+				Product product = CreateProduct(products, true); // при нажатии 1 создаеться пункт меню
 				AddNewProduct(ref products, product);
 
 			}
@@ -444,14 +550,14 @@ while (runProgram)
 		case 4:
 			{
 				int id = InputInt("Input id for update: "); // обновили элемент
-				Product product = CreateProduct(products, ref CURRENT_ID, false);
+				Product product = CreateProduct(products, false);
 				UpdateProductById(products, id, product);
 			}
 			break;
 		case 5:
 			{
 				int position = InputInt("Input position for insert: ");
-				Product product = CreateProduct(products, ref CURRENT_ID, true);
+				Product product = CreateProduct(products, true);
 				InsertproductIntoPosition(ref products, position, product);
 			}
 			break;
@@ -474,11 +580,10 @@ while (runProgram)
 		case 7:
 			{
 				Console.WriteLine($"input min end max delivery date from {GetMinDeliveryDate(products).ToShortDateString()} to {GetMaxDeliveryDate(products).ToShortDateString()}");
-				Console.WriteLine("min date: ");
-				DateTime minDate = DateTime.Parse(Console.ReadLine());
 
-				Console.WriteLine("max date: ");
-				DateTime maxDate = DateTime.Parse(Console.ReadLine());
+				DateTime minDate = InputDateTime("min date: ");
+
+				DateTime maxDate = InputDateTime("max date: ");
 
 				Product[] findedProducts = FindProductsFromMinToMaxDeliveryDate(products, minDate, maxDate);
 
@@ -489,21 +594,49 @@ while (runProgram)
 		case 8:
 			{
 				Console.WriteLine($"input min end max Self Life Days date from {GetMinSelfLifeDays(products)} to {GetMaxSelfLifeDays(products)}");
-				Console.WriteLine("min  Self Life Days: ");
-				int minSelfLifeDays = int.Parse(Console.ReadLine());
 
-				Console.WriteLine("max  Self Life Days: ");
-				int maxSelfLifeDays = int.Parse(Console.ReadLine());
+				int minSelfLifeDays = InputInt("min  Self Life Days: ");
+
+				int maxSelfLifeDays = InputInt("max  Self Life Days: ");
 
 				Product[] findedProducts = FindProductsFromMinToMaxSelfLifeDays(products, minSelfLifeDays, maxSelfLifeDays);
 
 				PrintManyProducts(findedProducts);
 			}
 			break;
-		case 9:
-			Console.WriteLine("Input asc desc sort (trueor false)");  // сщртировка бузырьковая от меньшего к большему и на обород
-			bool asc = bool.Parse(Console.ReadLine());
+		/*case 9:
+			bool asc =InputBool("Input asc desc sort (trueor false)");  // сортировка бузырьковая от меньшего к большему и на обород
 			SortproductsByBalance(products, asc);
+			break;*/
+		case 11:
+			{
+				string fileName = InputString("Input file name: "); // копирование на файл для печати txt
+				PrintManyProductsToFile(products, fileName);
+			}
+			break;
+		case 12:
+			{
+				string fileName = InputString("Input file name: "); // сохранение файла в столбик для считывания машине
+				SaveManyProductToFile(products, fileName);
+			}
+			break;
+		case 13:
+			{
+				string fileName = InputString("Input file name: "); // загруска с файла в программу
+				products = LoadManyProductFromFile(fileName);
+			}
+			break;
+		case 14:
+			{
+				string fileName = InputString("Input file name: "); //сериализация закодировали что бы не могли изменить
+				SerializeManyProductToFile(products, fileName);
+			}
+			break;
+		case 15:
+			{
+				string fileName = InputString("Input file name: "); // дисериализация разкодировали
+				products = DeserializeManyProductFromFile(fileName);
+			}
 			break;
 		case 0:
 			{
@@ -511,7 +644,6 @@ while (runProgram)
 				runProgram = false;
 			}
 			break;
-
 		default:
 			{
 				Console.WriteLine("Unknown command"); // не известная команда
