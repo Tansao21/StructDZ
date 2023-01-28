@@ -353,10 +353,10 @@ Product[] LoadManyProductFromFile(string fileName) // загруска с фай
 {
 	StreamReader reader = new StreamReader(fileName);
 
-	int countProduct = int.Parse(reader.ReadLine());
+	int countProducts = int.Parse(reader.ReadLine());
 	Product.CURRENT_ID = int.Parse(reader.ReadLine());
 
-	Product[] products = new Product[countProduct];
+	Product[] products = new Product[countProducts];
 
 	for (int i = 0; i < products.Length; i++)
 	{
@@ -380,7 +380,7 @@ void SerializeManyProductToFile(Product[] products, string fileName)  // сер�
 	FileStream stream = new FileStream(fileName, FileMode.OpenOrCreate, FileAccess.Write);
 
 	ProductsList productsList;
-	productsList.CURRENT_ID == Product.CURRENT_ID;
+	productsList.CURRENT_ID = Product.CURRENT_ID;
 	productsList.products = products;
 
 	formatter.Serialize(stream, productsList);
@@ -394,13 +394,13 @@ Product[] DeserializeManyProductFromFile(string fileName)
 
 	FileStream stream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
 
-	ProductsList = (ProductsList)formatter.Deserialize(stream);
+	ProductsList productsList = (ProductsList)formatter.Deserialize(stream);
 
 stream.Close();
 
-Product.CURRENT_ID = ProductsList.CURRENT_ID;
+Product.CURRENT_ID = productsList.CURRENT_ID;
 
-return ProductsList.products;
+return productsList.products;
 }
 #endregion
 
@@ -454,9 +454,9 @@ Product[] FindProductsFromMinToMaxSelfLifeDays(Product[] products, int minSelfLi
 #endregion
 
 #region Sort Methods
-/*void SortproductsByBalance(Product[] products, bool asc) // сортировка пузырьком
+void SortproductsByBalance(Product[] products, bool asc) // сортировка пузырьком
 {
-	Product[] temp;
+	Product temp;
 	bool sort;
 	int offset = 0;
 
@@ -490,7 +490,7 @@ Product[] FindProductsFromMinToMaxSelfLifeDays(Product[] products, int minSelfLi
 
 		offset++;
 	} while (!sort);
-}*/
+}
 #endregion
 
 #region Interface Methods // Управление меню
@@ -604,10 +604,10 @@ while (runProgram)
 				PrintManyProducts(findedProducts);
 			}
 			break;
-		/*case 9:
+		case 9:
 			bool asc =InputBool("Input asc desc sort (trueor false)");  // сортировка бузырьковая от меньшего к большему и на обород
 			SortproductsByBalance(products, asc);
-			break;*/
+			break;
 		case 11:
 			{
 				string fileName = InputString("Input file name: "); // копирование на файл для печати txt
